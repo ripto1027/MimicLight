@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "mimiclight:block/mimic_light_block_default"
+    }
+  }
+}
