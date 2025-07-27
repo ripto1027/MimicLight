@@ -14,7 +14,7 @@ public class MimicLightBlockStateProvider extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
-        BlockModelBuilder model = models().cubeAll("mimic_light_block_default", modLoc("block/mimic_light_block")).renderType("translucent");
+        BlockModelBuilder model = models().cubeAll("mimic_light_block_default", modLoc("block/mimic_light_block")).renderType("cutout");
         simpleBlockWithItem(MimicLightBlocks.MIMIC_LIGHT_BLOCK.get(), model);
     }
 }

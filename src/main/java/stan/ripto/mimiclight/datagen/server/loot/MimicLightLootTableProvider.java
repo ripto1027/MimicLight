@@ -26,6 +26,7 @@ public class MimicLightLootTableProvider extends LootTableProvider {
         @Override
         protected void generate() {
             dropSelf(MimicLightBlocks.MIMIC_LIGHT_BLOCK.get());
+
         }
 
         @Override

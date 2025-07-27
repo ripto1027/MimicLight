@@ -18,18 +18,19 @@ import stan.ripto.mimiclight.blockentity.MimicLightBlockEntity;
 import java.util.List;
 
 public class MimicLightBakedModel extends BakedModelWrapper<BakedModel> {
-    public MimicLightBakedModel(BakedModel defaultModel) {
-        super(defaultModel);
+    public MimicLightBakedModel(BakedModel model) {
+        super(model);
     }
 
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
         BlockState copiedState = extraData.get(MimicLightBlockEntity.COPIED_STATE_PROPERTY);
 
-        if (copiedState != null && copiedState != MimicLightBlocks.MIMIC_LIGHT_BLOCK.get().defaultBlockState()) {
+        if (copiedState != null && !copiedState.is(MimicLightBlocks.MIMIC_LIGHT_BLOCK.get())) {
             BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(copiedState);
+            ChunkRenderTypeSet types = model.getRenderTypes(copiedState, rand, extraData);
 
-            if (renderType == null || model.getRenderTypes(copiedState, rand, extraData).contains(renderType)) {
+            if (renderType == null || types.contains(renderType)) {
                 return model.getQuads(copiedState, side, rand, extraData, renderType);
             }
         }
@@ -41,7 +42,7 @@ public class MimicLightBakedModel extends BakedModelWrapper<BakedModel> {
     public @NotNull ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data) {
         BlockState copiedState = data.get(MimicLightBlockEntity.COPIED_STATE_PROPERTY);
 
-        if (copiedState != null && copiedState != MimicLightBlocks.MIMIC_LIGHT_BLOCK.get().defaultBlockState()) {
+        if (copiedState != null && !copiedState.is(MimicLightBlocks.MIMIC_LIGHT_BLOCK.get())) {
             BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(copiedState);
             return model.getRenderTypes(copiedState, rand, data);
         }

@@ -7,15 +7,14 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import stan.ripto.mimiclight.blockentity.MimicLightBlockEntity;
@@ -37,16 +36,13 @@ public class MimicLightBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         BlockEntity tile = level.getBlockEntity(pos);
-        if (tile instanceof MimicLightBlockEntity mimic) {
-            if (mimic.getHasCamo() && mimic.getCopiedState().getBlock() != MimicLightBlocks.MIMIC_LIGHT_BLOCK.get()) {
-                mimic.setHasCamo(false);
-                popCamoItem(mimic.getCopiedState(), level, pos);
-            }
+        if (tile instanceof MimicLightBlockEntity mimic && mimic.hasCopiedState() && !player.isCreative()) {
+            popCopiedStateBlockItem(mimic.getCopiedState(), level, pos);
         }
 
-        super.onRemove(state, level, pos, newState, movedByPiston);
+        super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
@@ -55,11 +51,12 @@ public class MimicLightBlock extends BaseEntityBlock {
         if (!(tile instanceof MimicLightBlockEntity mimic)) return InteractionResult.PASS;
 
         ItemStack heldItem = player.getMainHandItem();
-        if (mimic.getHasCamo()) {
+        if (mimic.hasCopiedState()) {
             if (player.isCrouching() && heldItem.isEmpty()) {
-                popCamoItem(mimic.getCopiedState(), level, pos);
+                if (!player.isCreative()) {
+                    popCopiedStateBlockItem(mimic.getCopiedState(), level, pos);
+                }
                 mimic.setCopiedState(MimicLightBlocks.MIMIC_LIGHT_BLOCK.get().defaultBlockState());
-                mimic.setHasCamo(false);
             }
             return InteractionResult.PASS;
         }
@@ -67,24 +64,25 @@ public class MimicLightBlock extends BaseEntityBlock {
         if (!(heldItem.getItem() instanceof BlockItem)) return InteractionResult.PASS;
 
         Block heldBlock = Block.byItem(heldItem.getItem());
-        if (heldBlock == Blocks.AIR || heldBlock == MimicLightBlocks.MIMIC_LIGHT_BLOCK.get()) {
-            return InteractionResult.PASS;
-        }
+        if (heldBlock instanceof EntityBlock) return InteractionResult.PASS;
 
-        BlockState stateToCopy = heldBlock.defaultBlockState();
-        if (!stateToCopy.getProperties().isEmpty()) return InteractionResult.PASS;
+        BlockPlaceContext context = new BlockPlaceContext(level, player, hand, heldItem, hit);
+        BlockState stateToCopy = heldBlock.getStateForPlacement(context);
+        if (stateToCopy == null) return InteractionResult.PASS;
+
+        VoxelShape shape = stateToCopy.getShape(level, pos);
+        if (!Block.isShapeFullBlock(shape)) return InteractionResult.PASS;
 
         mimic.setCopiedState(stateToCopy);
-        mimic.setHasCamo(true);
-        heldItem.shrink(1);
+        if (!player.isCreative()) heldItem.shrink(1);
 
         return InteractionResult.SUCCESS;
     }
 
-    private void popCamoItem(BlockState state, Level level, BlockPos pos) {
+    private void popCopiedStateBlockItem(BlockState state, Level level, BlockPos pos) {
         ItemStack stack = state.getBlock().asItem().getDefaultInstance();
         stack.setCount(1);
-        ItemEntity item = new ItemEntity(level, pos.getX(), pos.getY() + 1, pos.getZ(), stack);
+        ItemEntity item = new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), stack);
         level.addFreshEntity(item);
     }
 }

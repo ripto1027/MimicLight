@@ -20,10 +20,8 @@ import stan.ripto.mimiclight.block.MimicLightBlocks;
 public class MimicLightBlockEntity extends BlockEntity {
     public static final ModelProperty<BlockState> COPIED_STATE_PROPERTY = new ModelProperty<>();
     private BlockState copiedState = MimicLightBlocks.MIMIC_LIGHT_BLOCK.get().defaultBlockState();
-    private boolean hasCamo;
     private CompoundTag pendingStateNbt = null;
     public static final String COPIED_STATE_KEY = "copied_state";
-    public static final String HAS_CAMO_KEY = "has_como";
 
     public MimicLightBlockEntity(BlockPos pos, BlockState state) {
         super(MimicLightBlockEntities.MIMIC_LIGHT_BLOCK.get(), pos, state);
@@ -35,7 +33,6 @@ public class MimicLightBlockEntity extends BlockEntity {
                     this.level.holderLookup(ForgeRegistries.Keys.BLOCKS),
                     this.pendingStateNbt
             );
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_ALL);
             this.pendingStateNbt = null;
         }
     }
@@ -54,13 +51,8 @@ public class MimicLightBlockEntity extends BlockEntity {
         return this.copiedState;
     }
 
-    public void setHasCamo(boolean hasCamo) {
-        this.hasCamo = hasCamo;
-        setChanged();
-    }
-
-    public boolean getHasCamo() {
-        return this.hasCamo;
+    public boolean hasCopiedState() {
+        return !copiedState.is(MimicLightBlocks.MIMIC_LIGHT_BLOCK.get());
     }
 
     @SuppressWarnings("NullableProblems")
@@ -69,7 +61,6 @@ public class MimicLightBlockEntity extends BlockEntity {
         resolvePendingState();
         super.saveAdditional(nbt);
         nbt.put(COPIED_STATE_KEY, NbtUtils.writeBlockState(this.copiedState));
-        nbt.putBoolean(HAS_CAMO_KEY, this.hasCamo);
     }
 
     @SuppressWarnings("NullableProblems")
@@ -78,9 +69,6 @@ public class MimicLightBlockEntity extends BlockEntity {
         super.load(nbt);
         if (nbt.contains(COPIED_STATE_KEY)) {
             this.pendingStateNbt = nbt.getCompound(COPIED_STATE_KEY);
-        }
-        if (nbt.contains(HAS_CAMO_KEY)) {
-            this.hasCamo = nbt.getBoolean(HAS_CAMO_KEY);
         }
     }
 
